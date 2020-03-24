@@ -9,7 +9,9 @@ install.packages('remotes')
 remotes::install_github('nuvolos-cloud/r-nuvolos-tools)
 ```
 
-## Usage
+## Usage 
+
+### Package installation on cluster
 
 ```
 nuvolos.tools::install.packages('package')
@@ -19,3 +21,8 @@ nuvolos.tools::install_github('repo/package')
 nuvolos.tools::package_sync_hpc()
 ```
 
+### Job submission
+
+```
+nuvolos.tools::slurm_run("~/files/xyz.R",n_cpus=10)
+```
