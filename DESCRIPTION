@@ -1,0 +1,10 @@
+Package: nuvolos.tools
+Type: Package
+Title: R Tools for Nuvolos
+Version: 0.1.0
+Author: Alphacruncher AG
+Maintainer: Andras Sali <andras.sali@alphacruncher.com>
+Description: Miscellaneous tools for using R within Nuvolos (nuvolos.cloud)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
