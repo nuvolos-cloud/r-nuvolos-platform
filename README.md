@@ -6,7 +6,7 @@ This package aids using R together with the HPC cluster from Nuvolos
 
 ```
 install.packages('remotes')
-remotes::install_github('nuvolos-cloud/r-nuvolos-tools)
+remotes::install_github('nuvolos-cloud/r-nuvolos-tools')
 ```
 
 ## Usage 
