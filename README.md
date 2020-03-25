@@ -21,8 +21,10 @@ nuvolos.tools::install_github('repo/package')
 nuvolos.tools::package_sync_hpc()
 ```
 
-### Job submission
+### Job submission / monitoring / cancellation
 
 ```
-nuvolos.tools::slurm_run("~/files/xyz.R",n_cpus=10)
+nuvolos.tools::sbatch("~/files/xyz.R",n_cpus=4)
+nuvolos.tools::squeue()
+nuvolos.tools::scancel(jobid)
 ```
