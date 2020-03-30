@@ -69,4 +69,28 @@ install_github <- function(repo) {
   system(sprintf("ssh %s@scc-secondary.alphacruncher.net 'rm -rf %s/lib/00*'",user_name, cluster_path))
 
   system(sprintf("ssh -o ServerAliveInterval=30 %s@scc-secondary.alphacruncher.net \"module load R/intel/mkl/%s && export R_LIBS_USER=%s/lib && Rscript -e \\\"remotes::install_github('%s')\\\"\" && mkdir -p ~/hpc_installed/lib/%s",user_name, r_version, cluster_path, repo, tail(strsplit(repo,"/")[[1]],1)))
+  remotes::install_github(repo)
+}
+
+
+#' Synchronize packages between Nuvolos and the HPC Cluster
+#' @export
+install_local <- function(path) {
+  gsub("(.*)/$","\\1",path, perl=TRUE)
+  if (!grepl("^~/",path)) {
+    stop("Error: path must start with ~/")
+  }
+  cluster_path <- read.delim("/lifecycle/.clusterpath", header = FALSE, stringsAsFactors = FALSE)[1,1]
+  user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+  r_version <- paste0(R.version$major,".",R.version$minor)
+
+  if (!'remotes' %in% dir("~/hpc_installed/lib")) {
+    nuvolos.tools:::install.packages('remotes')
+  }
+
+  # remove any lock folders
+  system(sprintf("ssh %s@scc-secondary.alphacruncher.net 'rm -rf %s/lib/00*'",user_name, cluster_path))
+
+  system(sprintf("ssh -o ServerAliveInterval=30 %s@scc-secondary.alphacruncher.net \"module load R/intel/mkl/%s && export R_LIBS_USER=%s/lib HOME=%s && Rscript -e \\\"remotes::install_local('%s',force=TRUE)\\\"\" && mkdir -p ~/hpc_installed/lib/%s",user_name, r_version, cluster_path, cluster_path, path, tail(strsplit(path,"/")[[1]],1)))
+  remotes::install_local(path=path, force=TRUE)
 }
