@@ -21,6 +21,7 @@ sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE) {
 }
 
 #' Get slurm job status
+#' @param job_id The SLURM job id
 #' @export
 scancel <- function(job_id) {
   user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })

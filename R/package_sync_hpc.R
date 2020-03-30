@@ -30,6 +30,7 @@ package_sync_hpc <- function() {
 }
 
 #' Install packages locally and remotely
+#' @param package A vector of package names
 #' @export
 install.packages <- function(package) {
   cluster_path <- read.delim("/lifecycle/.clusterpath", header = FALSE, stringsAsFactors = FALSE)[1,1]
@@ -54,7 +55,8 @@ install.packages <- function(package) {
 }
 
 
-#' Synchronize packages between Nuvolos and the HPC Cluster
+#' Install github packages locally and remotely
+#' @param repo A github repo URL
 #' @export
 install_github <- function(repo) {
   cluster_path <- read.delim("/lifecycle/.clusterpath", header = FALSE, stringsAsFactors = FALSE)[1,1]
@@ -74,6 +76,7 @@ install_github <- function(repo) {
 
 
 #' Synchronize packages between Nuvolos and the HPC Cluster
+#' @param path A local filesystem path (must be given in relative terms, starting with '~/')
 #' @export
 install_local <- function(path) {
   gsub("(.*)/$","\\1",path, perl=TRUE)

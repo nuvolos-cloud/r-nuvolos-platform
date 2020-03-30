@@ -17,6 +17,8 @@ remotes::install_github('nuvolos-cloud/r-nuvolos-tools')
 nuvolos.tools::install.packages('package')
 # or to install from github
 nuvolos.tools::install_github('repo/package')
+# or to install a local package
+nuvolos.tools::install_local("~/files/my_package")
 # or to sync existing libraries
 nuvolos.tools::package_sync_hpc()
 ```
