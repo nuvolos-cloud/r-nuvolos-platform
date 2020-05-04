@@ -44,7 +44,7 @@ install.packages <- function(package) {
   system(sprintf("ssh %s@scc-secondary.alphacruncher.net 'rm -rf %s/lib/%s/00*'",user_name, cluster_path, aid))
 
   # create a folder where we track successful remote package installs
-  system(sptrinf('mkdir -p ~/hpc_installed/lib/%s',aid))
+  system(sprintf('mkdir -p ~/hpc_installed/lib/%s',aid))
 
   # install first on hpc cluster
   for (p in package) {
@@ -66,7 +66,7 @@ install_github <- function(repo) {
   user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
   r_version <- paste0(R.version$major,".",R.version$minor)
 
-  if (!'remotes' %in% dir(sptrinf('mkdir -p ~/hpc_installed/lib/%s',aid))) {
+  if (!'remotes' %in% dir(sprintf('mkdir -p ~/hpc_installed/lib/%s',aid))) {
     nuvolos.tools:::install.packages('remotes')
   }
 
@@ -92,7 +92,7 @@ install_local <- function(path) {
   aid <- read.delim('/lifecycle/.aid', header = FALSE, stringsAsFactors = FALSE)[1,1]
   r_version <- paste0(R.version$major,".",R.version$minor)
 
-  if (!'remotes' %in% dir(sptrinf('mkdir -p ~/hpc_installed/lib/%s',aid))) {
+  if (!'remotes' %in% dir(sprintf('mkdir -p ~/hpc_installed/lib/%s',aid))) {
     nuvolos.tools:::install.packages('remotes')
   }
 
