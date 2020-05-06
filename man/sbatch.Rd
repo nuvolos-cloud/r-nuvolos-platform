@@ -11,7 +11,7 @@ sbatch(script, n_cpus = 4, queue = "intq", use_mpi = FALSE)
 
 \item{n_cpus}{The number of cpus requested}
 
-\item{mpi}{Whether to use MPI for the job (required for multi-node jobs)}
+\item{use_mpi}{Whether to use MPI for the job (required for multi-node jobs)}
 }
 \description{
 Run an R script through SLURM
