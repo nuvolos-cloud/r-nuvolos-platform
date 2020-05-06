@@ -1,7 +1,7 @@
 #' Run an R script through SLURM
 #' @param script The R script to execute on the cluster. The path should start with ~/
 #' @param n_cpus The number of cpus requested
-#' @param mpi Whether to use MPI for the job (required for multi-node jobs)
+#' @param use_mpi Whether to use MPI for the job (required for multi-node jobs)
 #' @export
 sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE) {
   if (!grepl("^~/",script)) {
@@ -17,12 +17,10 @@ sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE) {
   if (use_mpi) {
     command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@scc-secondary.alphacruncher.net \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s && sbatch --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"mpirun --quiet -np 1 Rscript --verbose %s\\\"\"",
     user_name, r_version, cluster_path, aid, cluster_path,queue, n_cpus, cluster_path, cluster_path, script)
-    print(command_value)
     system(command_value)
   } else {
     command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@scc-secondary.alphacruncher.net \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s NUM_CPUS=%s && sbatch --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"Rscript --verbose %s\\\"\"",
     user_name, r_version, cluster_path, aid, cluster_path, n_cpus, queue, n_cpus, cluster_path, cluster_path, script)
-    print(command_value)
     system(command_value)
   }
 }
@@ -40,4 +38,68 @@ scancel <- function(job_id) {
 squeue <- function() {
   user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
   system(sprintf("ssh -o ServerAliveInterval=30 %s@scc-secondary.alphacruncher.net \"module load slurm && squeue\"", user_name))
+}
+
+#' Run job as an interactive R script
+#' @param script The R script to execute on the cluster. The path to the script should start ~/
+#' @param n_cpus The number of cpus requested for the operation
+#' @param queue The queue to use for the job. By default this is intq. 
+#' @param use_mpi Whether to use MPI for running the job (required for multi-node jobs)
+#' @param sync_wait The amount of time to wait (in seconds) after job completion for the system to synchronize files between Nuvolos and the high performance computing cluster. Larger files warrant larger wait times.
+#' @param report_freq The frequency of polling job information from the cluster (by default and at least 15 seconds)
+#' @export
+run_job_interactive <- function(script, n_cpus = 4, queue = "intq", use_mpi=FALSE, sync_wait = 60, report_freq = 15) {
+  
+  if (report_freq < 15) {
+      stop("Error: Please provide a polling frequency of at least 15 seconds.")
+  }
+
+  if (sync_wait < 60) {
+      stop("Error: Please provide a synchronization period of at least 60 seconds. We suggest longer wait periods if you expect a large amount of information to be emitted by your cluster process.")
+  }
+  
+  val <- sbatch(script, n_cpus, queue, use_mpi)
+  m <- regexec("Submitted batch job (\\d*)", val, perl=TRUE)
+  job_id <- as.integer(regmatches(val, m)[[1]][2])
+  cat("Polling the cluster for the most recent information. \n")
+  while(TRUE)
+  {
+    Sys.sleep(report_freq)
+    state <- suppressWarnings({ extract_state(slookup_job(job_id)) })
+    timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+    if (state == "FAILED" || state == -1) {
+      if (state == -1) {
+        state <- "UNKNOWN COMPLETED STATE"
+      }
+      cat(sprintf("%s > Job %s has finished with state %s.\n", timestamp, job_id ,state))
+      break
+    } else {
+      cat(sprintf("%s > Job %s is still running.\n", timestamp, job_id))
+    }
+  }
+  cat("Waiting for file system synchronization between Nuvolos and the compute cluster.\n")
+  Sys.sleep(sync_wait)
+  cat("Exiting job execution.\n")
+}
+
+#' Provide detailed information on status of running job
+#' @param job_id The job to be checked. 
+#' @export
+slookup_job <- function(job_id) {
+  user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+  ret <- system(sprintf("ssh -o ServerAliveInterval=30 %s@scc-secondary.alphacruncher.net \"module load slurm && scontrol show job %s\"", user_name, job_id), intern = TRUE)
+  return(ret)
+}
+
+#' Extract job state from detailed job information provided by slookup
+#' @param lookup_val Result from running slookup_job. Can be either an array containing an error message or job details. In case of an error message, the job has finished.
+#' @export
+extract_state <- function(lookup_val) {
+  if (is.na(lookup_val[4])) {
+    return(-1) # job info doesn't exist, it has been stopped some time ago
+  }
+  
+  m <- regexec("JobState=(\\w*) Reason=.*", lookup_val[4], perl = TRUE)
+  job_state <- regmatches(lookup_val[4], m)[[1]][2]
+  return(job_state)
 }
