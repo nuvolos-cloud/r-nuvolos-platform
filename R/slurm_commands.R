@@ -17,11 +17,11 @@ sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE) {
   if (use_mpi) {
     command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@scc-secondary.alphacruncher.net \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s && sbatch --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"mpirun --quiet -np 1 Rscript --verbose %s\\\"\"",
     user_name, r_version, cluster_path, aid, cluster_path,queue, n_cpus, cluster_path, cluster_path, script)
-    system(command_value)
+    system(command_value, intern = TRUE)
   } else {
     command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@scc-secondary.alphacruncher.net \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s NUM_CPUS=%s && sbatch --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"Rscript --verbose %s\\\"\"",
     user_name, r_version, cluster_path, aid, cluster_path, n_cpus, queue, n_cpus, cluster_path, cluster_path, script)
-    system(command_value)
+    system(command_value, intern = TRUE)
   }
 }
 
@@ -61,7 +61,7 @@ run_job_interactive <- function(script, n_cpus = 4, queue = "intq", use_mpi=FALS
   val <- sbatch(script, n_cpus, queue, use_mpi)
   m <- regexec("Submitted batch job (\\d*)", val, perl=TRUE)
   job_id <- as.integer(regmatches(val, m)[[1]][2])
-  cat("Polling the cluster for the most recent information. \n")
+  cat(sprintf("Polling the cluster for the most recent information. Monitoring job id %s\n", job_id))
   while(TRUE)
   {
     Sys.sleep(report_freq)
@@ -96,7 +96,7 @@ slookup_job <- function(job_id) {
 #' @export
 extract_state <- function(lookup_val) {
   if (is.na(lookup_val[4])) {
-    return(-1) # job info doesn't exist, it has been stopped some time ago
+    return(-1) # job info doesn't exist, it has been stopped some time ago  
   }
   
   m <- regexec("JobState=(\\w*) Reason=.*", lookup_val[4], perl = TRUE)
