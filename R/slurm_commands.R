@@ -61,20 +61,20 @@ run_job_interactive <- function(script, n_cpus = 4, queue = "intq", use_mpi=FALS
   val <- sbatch(script, n_cpus, queue, use_mpi)
   m <- regexec("Submitted batch job (\\d*)", val, perl=TRUE)
   job_id <- as.integer(regmatches(val, m)[[1]][2])
-  cat(sprintf("Polling the cluster for the most recent information. Monitoring job id %s\n", job_id))
+  cat(sprintf("Polling the cluster for the most recent information. Monitoring job id %s.\n", job_id))
   while(TRUE)
   {
     Sys.sleep(report_freq)
     state <- suppressWarnings({ extract_state(slookup_job(job_id)) })
     timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-    if (state == "FAILED" || state == -1) {
+    if (state == "FAILED" || state == -1 || state == "COMPLETED") {
       if (state == -1) {
         state <- "UNKNOWN COMPLETED STATE"
       }
       cat(sprintf("%s > Job %s has finished with state %s.\n", timestamp, job_id ,state))
       break
     } else {
-      cat(sprintf("%s > Job %s is still running.\n", timestamp, job_id))
+      cat(sprintf("%s > Job %s is not yet finished. State is %s.\n", timestamp, job_id, state))
     }
   }
   cat("Waiting for file system synchronization between Nuvolos and the compute cluster.\n")
