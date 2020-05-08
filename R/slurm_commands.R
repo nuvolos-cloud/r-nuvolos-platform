@@ -2,8 +2,9 @@
 #' @param script The R script to execute on the cluster. The path should start with ~/
 #' @param n_cpus The number of cpus requested
 #' @param use_mpi Whether to use MPI for the job (required for multi-node jobs)
+#' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
 #' @export
-sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE) {
+sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE, user_name = NULL) {
   if (!grepl("^~/",script)) {
     stop("Error: script must be given as a path that starts with ~/")
   }
@@ -11,7 +12,9 @@ sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE) {
     dir.create("~/files/hpc_job_logs")
   }
   cluster_path <- read.delim("/lifecycle/.clusterpath", header = FALSE, stringsAsFactors = FALSE)[1,1]
-  user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+  if(is.null(user_name) {
+    user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+  }
   aid <- read.delim('/lifecycle/.aid', header = FALSE, stringsAsFactors = FALSE)[1,1]
   r_version <- paste0(R.version$major,".",R.version$minor)
   if (use_mpi) {
@@ -27,16 +30,23 @@ sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE) {
 
 #' Get slurm job status
 #' @param job_id The SLURM job id
+#' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
 #' @export
-scancel <- function(job_id) {
-  user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+scancel <- function(job_id, user_name = NULL) {
+  if(is.null(user_name) {
+    user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+  }
   system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm && scancel %s\"", user_name, job_id))
 }
 
 #' Get slurm job status
 #' @export
-squeue <- function() {
-  user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+#' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
+#' @export
+squeue <- function(user_name = NULL) {
+  if(is.null(user_name) {
+    user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+  }
   system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm && squeue\"", user_name))
 }
 
@@ -47,8 +57,9 @@ squeue <- function() {
 #' @param use_mpi Whether to use MPI for running the job (required for multi-node jobs)
 #' @param sync_wait The amount of time to wait (in seconds) after job completion for the system to synchronize files between Nuvolos and the high performance computing cluster. Larger files warrant larger wait times.
 #' @param report_freq The frequency of polling job information from the cluster (by default and at least 15 seconds)
+#' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
 #' @export
-run_job_interactive <- function(script, n_cpus = 4, queue = "intq", use_mpi=FALSE, sync_wait = 60, report_freq = 15) {
+run_job_interactive <- function(script, n_cpus = 4, queue = "intq", use_mpi=FALSE, sync_wait = 60, report_freq = 15, user_name = NULL) {
   
   if (report_freq < 15) {
       stop("Error: Please provide a polling frequency of at least 15 seconds.")
@@ -58,7 +69,7 @@ run_job_interactive <- function(script, n_cpus = 4, queue = "intq", use_mpi=FALS
       stop("Error: Please provide a synchronization period of at least 60 seconds. We suggest longer wait periods if you expect a large amount of information to be emitted by your cluster process.")
   }
   
-  val <- sbatch(script, n_cpus, queue, use_mpi)
+  val <- sbatch(script, n_cpus, queue, use_mpi, user_name)
   m <- regexec("Submitted batch job (\\d*)", val, perl=TRUE)
   job_id <- as.integer(regmatches(val, m)[[1]][2])
   cat(sprintf("Polling the cluster for the most recent information. Monitoring job id %s.\n", job_id))
@@ -84,9 +95,12 @@ run_job_interactive <- function(script, n_cpus = 4, queue = "intq", use_mpi=FALS
 
 #' Provide detailed information on status of running job
 #' @param job_id The job to be checked. 
+#' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
 #' @export
-slookup_job <- function(job_id) {
-  user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+slookup_job <- function(job_id, user_name) {
+  if(is.null(user_name) {
+    user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+  }
   ret <- system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm && scontrol show job %s\"", user_name, job_id), intern = TRUE)
   return(ret)
 }
