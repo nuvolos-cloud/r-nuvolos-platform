@@ -10,7 +10,8 @@ run_job_interactive(
   queue = "intq",
   use_mpi = FALSE,
   sync_wait = 60,
-  report_freq = 15
+  report_freq = 15,
+  user_name = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ run_job_interactive(
 \item{sync_wait}{The amount of time to wait (in seconds) after job completion for the system to synchronize files between Nuvolos and the high performance computing cluster. Larger files warrant larger wait times.}
 
 \item{report_freq}{The frequency of polling job information from the cluster (by default and at least 15 seconds)}
+
+\item{user_name}{Username at the Nuvolos cluster, leave this empty from a Nuvolos application}
 }
 \description{
 Run job as an interactive R script

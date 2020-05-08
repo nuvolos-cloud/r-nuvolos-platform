@@ -4,10 +4,12 @@
 \alias{slookup_job}
 \title{Provide detailed information on status of running job}
 \usage{
-slookup_job(job_id)
+slookup_job(job_id, user_name)
 }
 \arguments{
 \item{job_id}{The job to be checked.}
+
+\item{user_name}{Username at the Nuvolos cluster, leave this empty from a Nuvolos application}
 }
 \description{
 Provide detailed information on status of running job

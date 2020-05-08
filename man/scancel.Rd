@@ -4,10 +4,12 @@
 \alias{scancel}
 \title{Get slurm job status}
 \usage{
-scancel(job_id)
+scancel(job_id, user_name = NULL)
 }
 \arguments{
 \item{job_id}{The SLURM job id}
+
+\item{user_name}{Username at the Nuvolos cluster, leave this empty from a Nuvolos application}
 }
 \description{
 Get slurm job status

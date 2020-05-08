@@ -4,7 +4,10 @@
 \alias{squeue}
 \title{Get slurm job status}
 \usage{
-squeue()
+squeue(user_name = NULL)
+}
+\arguments{
+\item{user_name}{Username at the Nuvolos cluster, leave this empty from a Nuvolos application}
 }
 \description{
 Get slurm job status
