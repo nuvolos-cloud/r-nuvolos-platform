@@ -11,19 +11,19 @@ sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE, user_name = NU
   if (!dir.exists("~/files/hpc_job_logs")) {
     dir.create("~/files/hpc_job_logs")
   }
-  cluster_path <- read.delim("/lifecycle/.clusterpath", header = FALSE, stringsAsFactors = FALSE)[1,1]
+  cluster_path <- get_cluster_path()
   if(is.null(user_name)) {
-    user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+    user_name <- get_user_name()
   }
-  aid <- read.delim('/lifecycle/.aoid', header = FALSE, stringsAsFactors = FALSE)[1,1]
+  aoid <- read.delim('/lifecycle/.aoid', header = FALSE, stringsAsFactors = FALSE)[1,1]
   r_version <- paste0(R.version$major,".",R.version$minor)
   if (use_mpi) {
-    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"cd ~/files && module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s && sbatch --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"mpirun --quiet -np 1 Rscript --verbose %s\\\"\"",
-    user_name, r_version, cluster_path, aid, cluster_path,queue, n_cpus, cluster_path, cluster_path, script)
+    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s && cd ~/files && sbatch --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"mpirun --quiet -np 1 Rscript --verbose %s\\\"\"",
+    user_name, r_version, cluster_path, aoid, cluster_path,queue, n_cpus, cluster_path, cluster_path, script)
     system(command_value, intern = TRUE)
   } else {
-    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"cd ~/files && module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s NUM_CPUS=%s && sbatch --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"Rscript --verbose %s\\\"\"",
-    user_name, r_version, cluster_path, aid, cluster_path, n_cpus, queue, n_cpus, cluster_path, cluster_path, script)
+    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s NUM_CPUS=%s && cd ~/files &&  sbatch --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"Rscript --verbose %s\\\"\"",
+    user_name, r_version, cluster_path, aoid, cluster_path, n_cpus, queue, n_cpus, cluster_path, cluster_path, script)
     system(command_value, intern = TRUE)
   }
 }
@@ -33,10 +33,11 @@ sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE, user_name = NU
 #' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
 #' @export
 scancel <- function(job_id, user_name = NULL) {
+  cluster_path <- get_cluster_path()
   if(is.null(user_name)) {
-    user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+    user_name <- get_user_name()
   }
-  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"cd ~/files && module load slurm && scancel %s\"", user_name, job_id))
+  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && scancel %s\"", cluster_path, user_name, job_id))
 }
 
 #' Get slurm job status
@@ -44,10 +45,11 @@ scancel <- function(job_id, user_name = NULL) {
 #' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
 #' @export
 squeue <- function(user_name = NULL) {
+  cluster_path <- get_cluster_path()
   if(is.null(user_name)) {
-    user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+    user_name <- get_user_name()
   }
-  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"cd ~/files && module load slurm && squeue\"", user_name))
+  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && squeue\"", cluster_path, user_name))
 }
 
 #' Run job as an interactive R script
@@ -98,10 +100,11 @@ run_job_interactive <- function(script, n_cpus = 4, queue = "intq", use_mpi=FALS
 #' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
 #' @export
 slookup_job <- function(job_id, user_name) {
+  cluster_path <- get_cluster_path()
   if(is.null(user_name)) {
-    user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+    user_name <- get_user_name()
   }
-  ret <- system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"cd ~/files && module load slurm && scontrol show job %s\"", user_name, job_id), intern = TRUE)
+  ret <- system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && scontrol show job %s\"", cluster_path, user_name, job_id), intern = TRUE)
   return(ret)
 }
 
@@ -116,4 +119,12 @@ extract_state <- function(lookup_val) {
   m <- regexec("JobState=(\\w*) Reason=.*", lookup_val[4], perl = TRUE)
   job_state <- regmatches(lookup_val[4], m)[[1]][2]
   return(job_state)
+}
+
+get_cluster_path <- function() {
+  return(read.delim("/lifecycle/.clusterpath", header = FALSE, stringsAsFactors = FALSE)[1,1])
+}
+
+get_user_name <- function() {
+  return(suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] }))
 }
