@@ -37,7 +37,7 @@ scancel <- function(job_id, user_name = NULL) {
   if(is.null(user_name)) {
     user_name <- get_user_name()
   }
-  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && scancel %s\"", cluster_path, user_name, job_id))
+  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && scancel %s\"", user_name, cluster_path, job_id))
 }
 
 #' Get slurm job status
@@ -49,7 +49,7 @@ squeue <- function(user_name = NULL) {
   if(is.null(user_name)) {
     user_name <- get_user_name()
   }
-  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && squeue\"", cluster_path, user_name))
+  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && squeue\"", user_name, cluster_path))
 }
 
 #' Run job as an interactive R script
@@ -104,7 +104,7 @@ slookup_job <- function(job_id, user_name) {
   if(is.null(user_name)) {
     user_name <- get_user_name()
   }
-  ret <- system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && scontrol show job %s\"", cluster_path, user_name, job_id), intern = TRUE)
+  ret <- system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load slurm && scontrol show job %s\"", user_name, cluster_path, job_id), intern = TRUE)
   return(ret)
 }
 
