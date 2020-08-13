@@ -1,7 +1,7 @@
 Package: nuvolos.tools
 Type: Package
 Title: R Tools for Nuvolos
-Version: 0.1.6
+Version: 0.1.7
 Author: Alphacruncher AG
 Maintainer: Andras Sali <andras.sali@alphacruncher.com>
 Description: Miscellaneous tools for using R within Nuvolos (nuvolos.cloud)

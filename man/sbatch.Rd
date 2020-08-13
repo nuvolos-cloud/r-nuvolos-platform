@@ -4,7 +4,14 @@
 \alias{sbatch}
 \title{Run an R script through SLURM}
 \usage{
-sbatch(script, n_cpus = 4, queue = "intq", use_mpi = FALSE, user_name = NULL)
+sbatch(
+  script,
+  n_cpus = 4,
+  queue = "intq",
+  use_mpi = FALSE,
+  use_gsl = FALSE,
+  user_name = NULL
+)
 }
 \arguments{
 \item{script}{The R script to execute on the cluster. The path should start with ~/}
@@ -12,6 +19,8 @@ sbatch(script, n_cpus = 4, queue = "intq", use_mpi = FALSE, user_name = NULL)
 \item{n_cpus}{The number of cpus requested}
 
 \item{use_mpi}{Whether to use MPI for the job (required for multi-node jobs)}
+
+\item{use_gsl}{Whether to make GSL (GNU Scientific Library) available for linking}
 
 \item{user_name}{Username at the Nuvolos cluster, leave this empty from a Nuvolos application}
 }
