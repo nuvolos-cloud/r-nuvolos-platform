@@ -15,7 +15,7 @@ package_sync_hpc <- function(use_gsl=FALSE) {
   system(sprintf("ssh %s@hpc.nuvolos.cloud 'rm -rf %s/lib/%s/00*'",user_name, cluster_path, aid))
 
   # get list of installed packages
-  installed_packages_remote <- system(sprintf('ls ~/hpc_installed/lib/%s', aid), intern = TRUE)
+  installed_packages_remote <- system(sprintf('export HOME=%s && ls ~/hpc_installed/lib/%s',cluster_path, aid), intern = TRUE)
 
   packages_to_install <- setdiff(installed_packages_local, installed_packages_remote)
 
@@ -45,7 +45,7 @@ install.packages <- function(package, use_gsl = FALSE) {
   system(sprintf("ssh %s@hpc.nuvolos.cloud 'rm -rf %s/lib/%s/00*'",user_name, cluster_path, aid))
 
   # create a folder where we track successful remote package installs
-  system(sprintf('mkdir -p ~/hpc_installed/lib/%s',aid))
+  system(sprintf('export HOME=%s && mkdir -p ~/hpc_installed/lib/%s',cluster_path, aid))
 
   # install first on hpc cluster
   for (p in package) {
@@ -68,7 +68,7 @@ install_github <- function(repo, use_gsl = FALSE) {
   user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
   r_version <- paste0(R.version$major,".",R.version$minor)
 
-  if (!'remotes' %in% dir(sprintf('mkdir -p ~/hpc_installed/lib/%s',aid))) {
+  if (!'remotes' %in% dir(sprintf('export HOME=%s && mkdir -p ~/hpc_installed/lib/%s',cluster_path, aid))) {
     nuvolos.tools:::install.packages('remotes')
   }
 
@@ -94,7 +94,7 @@ install_local <- function(path, use_gsl = FALSE) {
   aid <- read.delim('/lifecycle/.aoid', header = FALSE, stringsAsFactors = FALSE)[1,1]
   r_version <- paste0(R.version$major,".",R.version$minor)
 
-  if (!'remotes' %in% dir(sprintf('mkdir -p ~/hpc_installed/lib/%s',aid))) {
+  if (!'remotes' %in% dir(sprintf('export HOME=%s && mkdir -p ~/hpc_installed/lib/%s',cluster_path, aid))) {
     nuvolos.tools:::install.packages('remotes')
   }
 
