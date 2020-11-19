@@ -1,3 +1,13 @@
+#' List remote packages
+list_remote_packages <- function() {
+  cluster_path <- read.delim("/lifecycle/.clusterpath", header = FALSE, stringsAsFactors = FALSE)[1,1]
+  aid <- read.delim('/lifecycle/.aoid', header = FALSE, stringsAsFactors = FALSE)[1,1]
+  user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
+ 
+  available_packages <- system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud 'ls %s/lib/%s'", user_name, cluster_path, aid),intern = TRUE)
+  return(available_packages)
+}
+
 #' Synchronize packages between Nuvolos and the HPC Cluster
 #' @export
 package_sync_hpc <- function(use_gsl=FALSE) {
@@ -15,16 +25,16 @@ package_sync_hpc <- function(use_gsl=FALSE) {
   system(sprintf("ssh %s@hpc.nuvolos.cloud 'rm -rf %s/lib/%s/00*'",user_name, cluster_path, aid))
 
   # get list of installed packages
-  installed_packages_remote <- system(sprintf('export HOME=%s && ls ~/hpc_installed/lib/%s',cluster_path, aid), intern = TRUE)
-
+  installed_packages_remote <- list_remote_packages()
+  
   packages_to_install <- setdiff(installed_packages_local, installed_packages_remote)
 
   if (length(packages_to_install) > 0) {
     r_version <- paste0(R.version$major,".",R.version$minor)
     for (p in packages_to_install) {
       print(sprintf("Installing package: %s", p))
-      system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load R/intel/mkl/%s && Rscript -e \\\"install.packages('%s',lib='%s/lib/%s', repos='%s')\\\"\" && mkdir -p ~/hpc_installed/lib/%s/%s",
-                     user_name, cluster_path, r_version, p, cluster_path, aid ,options()$repos,aid, p))
+      system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load R/intel/mkl/%s && Rscript -e \\\"install.packages('%s',lib='%s/lib/%s', repos='%s')\\\"\"",
+                     user_name, cluster_path, r_version, p, cluster_path, aid ,options()$repos))
     }
   } else {
     print("No additional packages to install.")
@@ -44,14 +54,11 @@ install.packages <- function(package, use_gsl = FALSE) {
   # remove any lock folders
   system(sprintf("ssh %s@hpc.nuvolos.cloud 'rm -rf %s/lib/%s/00*'",user_name, cluster_path, aid))
 
-  # create a folder where we track successful remote package installs
-  system(sprintf('export HOME=%s && mkdir -p ~/hpc_installed/lib/%s',cluster_path, aid))
-
   # install first on hpc cluster
   for (p in package) {
     r_version <- paste0(R.version$major,".",R.version$minor)
     print(sprintf("Installing package on cluster: %s", p))
-    system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load R/intel/mkl/%s && Rscript -e \\\"install.packages('%s',lib='%s/lib/%s', repos='%s')\\\"\" && mkdir -p ~/hpc_installed/lib/%s/%s",
+    system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load R/intel/mkl/%s && Rscript -e \\\"install.packages('%s',lib='%s/lib/%s', repos='%s')\\\"\"",
                    user_name, cluster_path, r_version, p, cluster_path, aid, options()$repos, aid,p))
   }
 
@@ -68,7 +75,7 @@ install_github <- function(repo, use_gsl = FALSE) {
   user_name <- suppressWarnings({ read.delim("/secrets/username", header = FALSE, stringsAsFactors = FALSE)[1,1] })
   r_version <- paste0(R.version$major,".",R.version$minor)
 
-  if (!'remotes' %in% dir(sprintf('export HOME=%s && mkdir -p ~/hpc_installed/lib/%s',cluster_path, aid))) {
+  if (!'remotes' %in% list_remote_packages()) {
     nuvolos.tools:::install.packages('remotes')
   }
 
@@ -94,14 +101,15 @@ install_local <- function(path, use_gsl = FALSE) {
   aid <- read.delim('/lifecycle/.aoid', header = FALSE, stringsAsFactors = FALSE)[1,1]
   r_version <- paste0(R.version$major,".",R.version$minor)
 
-  if (!'remotes' %in% dir(sprintf('export HOME=%s && mkdir -p ~/hpc_installed/lib/%s',cluster_path, aid))) {
+  if (!'remotes' %in% list_remote_packages()) {
     nuvolos.tools:::install.packages('remotes')
   }
 
   # remove any lock folders
   system(sprintf("ssh %s@hpc.nuvolos.cloud 'rm -rf %s/lib/%s/00*'",user_name, cluster_path, aid))
 
-  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s && Rscript -e \\\"remotes::install_local('%s',force=TRUE)\\\"\" && mkdir -p ~/hpc_installed/lib/%s/%s",
-                user_name, cluster_path, r_version, cluster_path, aid, cluster_path, path, aid, tail(strsplit(path,"/")[[1]],1)))
+  system(sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"export HOME=%s && cd ~/files && module load R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s && Rscript -e \\\"remotes::install_local('%s',force=TRUE)\\\"\"",
+                user_name, cluster_path, r_version, cluster_path, aid, cluster_path, path))
+                
   remotes::install_local(path=path, force=TRUE)
 }
