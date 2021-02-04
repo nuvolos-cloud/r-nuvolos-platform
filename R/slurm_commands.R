@@ -5,8 +5,9 @@
 #' @param use_gsl Whether to make GSL (GNU Scientific Library) available for linking
 #' @param user_name Username at the Nuvolos cluster, leave this empty from a Nuvolos application
 #' @param array If running an array job, a 2-length vector specifying starting and ending array indices
+#' @param n_nodes The number of nodes requested
 #' @export
-sbatch <- function(script, n_cpus=4, n_nodes=1, queue="intq", use_mpi=FALSE, use_gsl = FALSE, user_name = NULL, array=NULL) {
+sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE, use_gsl = FALSE, user_name = NULL, array=NULL, n_nodes=1) {
   if (!grepl("^~/",script)) {
     stop("Error: script must be given as a path that starts with ~/")
   }
