@@ -26,8 +26,13 @@ nuvolos.tools::package_sync_hpc()
 ### Job submission / monitoring / cancellation
 
 ```
+# Submitting a job on single node
 nuvolos.tools::sbatch("~/files/xyz.R",n_cpus=4)
+# Submitting a job on multiple nodes
+nuvolos.tools::sbatch("~/files/xyz.R",n_cpus=16, n_nodes=2)
+# Checking job status
 nuvolos.tools::squeue()
+# Cancel job
 nuvolos.tools::scancel(jobid)
 ```
 
