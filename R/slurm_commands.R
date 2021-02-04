@@ -22,25 +22,27 @@ sbatch <- function(script, n_cpus=4, queue="intq", use_mpi=FALSE, use_gsl = FALS
   
   if (!is.null(array)) {
     array_str <- sprintf("--array=%s-%s ",array[1],array[2])
+    format_str <- "%A_%a"
   } else {
     array_str <- ""
+    format_str <- "%j"
   }
   
   if (use_mpi && use_gsl) {
-    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && module load gsl-2.4-intel-17.0.6-stf5st2 && export R_LIBS_USER=%s/lib/%s HOME=%s && cd ~/files && sbatch %s --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"mpirun --quiet -np 1 Rscript --verbose %s\\\"\"",
-    user_name, r_version, cluster_path, aoid, cluster_path, array_str, queue, n_cpus, cluster_path, cluster_path, script)
+    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && module load gsl-2.4-intel-17.0.6-stf5st2 && export R_LIBS_USER=%s/lib/%s HOME=%s && cd ~/files && sbatch %s --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%s.out\\\" -e \\\"%s/files/hpc_job_logs/job-%s.err\\\" --wrap \\\"mpirun --quiet -np 1 Rscript --verbose %s\\\"\"",
+    user_name, r_version, cluster_path, aoid, cluster_path, array_str, queue, n_cpus, cluster_path, format_str, cluster_path, format_str, script)
     system(command_value, intern = TRUE)
   } else if (use_mpi && !use_gsl) {
-    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s && cd ~/files && sbatch %s --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"mpirun --quiet -np 1 Rscript --verbose %s\\\"\"",
-                             user_name, r_version, cluster_path, aoid, cluster_path, array_str, queue, n_cpus, cluster_path, cluster_path, script)
+    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s && cd ~/files && sbatch %s --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%s.out\\\" -e \\\"%s/files/hpc_job_logs/job-%s.err\\\" --wrap \\\"mpirun --quiet -np 1 Rscript --verbose %s\\\"\"",
+                             user_name, r_version, cluster_path, aoid, cluster_path, array_str, queue, n_cpus, cluster_path, format_str, cluster_path, format_str, script)
     system(command_value, intern = TRUE)
   }else if (!use_mpi && use_gsl) {
-    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && module load gsl-2.4-intel-17.0.6-stf5st2 && export R_LIBS_USER=%s/lib/%s HOME=%s NUM_CPUS=%s && cd ~/files &&  sbatch %s --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"Rscript --verbose %s\\\"\"",
-                             user_name, r_version, cluster_path, aoid, cluster_path, n_cpus, array_str, queue, n_cpus, cluster_path, cluster_path, script)
+    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && module load gsl-2.4-intel-17.0.6-stf5st2 && export R_LIBS_USER=%s/lib/%s HOME=%s NUM_CPUS=%s && cd ~/files &&  sbatch %s --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%s.out\\\" -e \\\"%s/files/hpc_job_logs/job-%s.err\\\" --wrap \\\"Rscript --verbose %s\\\"\"",
+                             user_name, r_version, cluster_path, aoid, cluster_path, n_cpus, array_str, queue, n_cpus, cluster_path, format_str, cluster_path, format_str, script)
     system(command_value, intern = TRUE)
   } else {
-    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s NUM_CPUS=%s && cd ~/files &&  sbatch %s --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%%j.out\\\" -e \\\"%s/files/hpc_job_logs/job-%%j.err\\\" --wrap \\\"Rscript --verbose %s\\\"\"",
-    user_name, r_version, cluster_path, aoid, cluster_path, n_cpus, array_str, queue, n_cpus, cluster_path, cluster_path, script)
+    command_value <- sprintf("ssh -o ServerAliveInterval=30 %s@hpc.nuvolos.cloud \"module load slurm R/intel/mkl/%s && export R_LIBS_USER=%s/lib/%s HOME=%s NUM_CPUS=%s && cd ~/files &&  sbatch %s --export=ALL -p %s -n %s -o \\\"%s/files/hpc_job_logs/job-%s.out\\\" -e \\\"%s/files/hpc_job_logs/job-%s.err\\\" --wrap \\\"Rscript --verbose %s\\\"\"",
+    user_name, r_version, cluster_path, aoid, cluster_path, n_cpus, array_str, queue, n_cpus, cluster_path, format_str, cluster_path, format_str, script)
     system(command_value, intern = TRUE)
   }
 }
